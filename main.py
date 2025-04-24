@@ -5,6 +5,7 @@ import sympy as sp
 import argparse
 import simulation
 import matplotlib.animation as animation
+import os
 
 # === Field Definitions ===
 def get_phi_functions(field_type='default'):
@@ -79,6 +80,12 @@ def plot_fields(x, t, X, T, S, L, phi, alpha, save_path=None):
     ax[1].contour(X, T, alpha, levels=5, colors='black', linestyles='dotted', linewidths=0.6)
     plt.tight_layout()
     if save_path is not None:
+        # Ensure output directory exists
+        out_dir = os.path.join(os.path.dirname(save_path) or '.', 'output')
+        os.makedirs(out_dir, exist_ok=True)
+        # Ensure file is in output dir
+        filename = os.path.basename(save_path)
+        save_path = os.path.join('output', filename) if not save_path.startswith('output' + os.sep) else save_path
         plt.savefig(save_path, dpi=150)
         print(f"Saved figure to {save_path}")
     plt.show()
@@ -97,10 +104,15 @@ def animate_field(x, phi_t, interval=30, save_path=None):
         return [im]
     ani = animation.FuncAnimation(fig, update, frames=len(phi_t), blit=True, interval=interval)
     if save_path:
+        # Ensure output directory exists
+        out_dir = os.path.join(os.path.dirname(save_path) or '.', 'output')
+        os.makedirs(out_dir, exist_ok=True)
+        # Ensure file is in output dir
+        filename = os.path.basename(save_path)
+        save_path = os.path.join('output', filename) if not save_path.startswith('output' + os.sep) else save_path
         ani.save(save_path, writer='ffmpeg', dpi=150)
         print(f"Animation saved to {save_path}")
-    else:
-        plt.show()
+    plt.close(fig)
 
 # === Diagnostics ===
 def print_diagnostics(S, L):
@@ -117,12 +129,11 @@ def main():
     parser.add_argument('--nt', type=int, default=800, help='number of t points')
     parser.add_argument('--alpha', type=float, default=0.05, help='base alpha amplitude')
     parser.add_argument('--field', type=str, default='default', choices=['default', 'soliton', 'gaussian', 'random'], help='initial field type')
-    parser.add_argument('--save', type=str, default=None, help='save figure to file')
-    parser.add_argument('--evolve', action='store_true', help='run time evolution (1D) and animate')
-    parser.add_argument('--frames', type=int, default=200, help='number of animation frames (for evolution)')
-    parser.add_argument('--dt', type=float, default=0.01, help='time step for evolution')
-    parser.add_argument('--noise', type=float, default=0.0, help='noise amplitude for evolution')
-    parser.add_argument('--anim', type=str, default=None, help='filename to save animation (e.g., anim.mp4)')
+    parser.add_argument('--save', type=str, default=None, help='save figure to file (placed in output/)')
+    parser.add_argument('--evolve', action='store_true', help='evolve field and produce animation')
+    parser.add_argument('--frames', type=int, default=300, help='number of animation frames (used with --evolve)')
+    parser.add_argument('--dt', type=float, default=0.02, help='time step for evolution (used with --evolve)')
+    parser.add_argument('--anim', type=str, default=None, help='filename for animation output (placed in output/)')
     args = parser.parse_args()
 
     x = np.linspace(args.xlim[0], args.xlim[1], args.nx)
@@ -141,7 +152,7 @@ def main():
         nt = args.frames
         def V_prime(phi):
             return phi**3 - phi  # d/dphi (1/4 phi^4 - 1/2 phi^2)
-        phi_t = simulation.leapfrog_time_evolution(phi0, phi1, dx, dt, nt, V_prime_func=V_prime, noise_amp=args.noise)
+        phi_t = simulation.leapfrog_time_evolution(phi0, phi1, dx, dt, nt, V_prime_func=V_prime)
         animate_field(x, phi_t, interval=30, save_path=args.anim)
     else:
         plot_fields(x, t, X, T, S, L, phi, alpha, save_path=args.save)
