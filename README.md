@@ -9,10 +9,10 @@ This simulation explores a quantum scalar field φ(x,t) augmented by an advanced
 - Nonlinear potential and spatial-temporal entropy coupling
 - High-resolution grid and high-quality visualization
 - Modular code for easy experimentation
-- **Command-line interface**: Choose field type, grid size, coupling, and output file
+- **Command-line interface**: Choose field type, grid size, coupling, and output file; supports evolution and animation options
 - **Diagnostics**: Prints entropy and Lagrangian statistics
 - **Cross-platform**: Works on Linux, macOS, and Windows (Python 3.8+)
-- **Saving figures**: Optionally saves the plot as an image (e.g. output.png)
+- **Saving figures/animations**: Optionally saves the plot as an image (e.g. output.png) or animation (e.g. output.mp4)
 
 ## Overview
 - Scalar field: φ(x,t) = sin(x) * cos(t) + 0.3 sin(2 x t) + 0.1 cos(3 x + 0.5 t²)
@@ -39,16 +39,29 @@ This simulation explores a quantum scalar field φ(x,t) augmented by an advanced
    ```
 2. **Run the simulation**
    ```bash
-   python main.py
+   python main.py [options]
    ```
-   Or with options:
+   Example with animation:
    ```bash
-   python main.py --field soliton --xlim -20 20 --tlim 0 40 --nx 1000 --nt 1000 --alpha 0.1 --save output.png
+   python main.py --field soliton --xlim -20 20 --nx 400 --evolve --frames 300 --dt 0.02 --anim soliton.mp4
    ```
    For all options, use:
    ```bash
    python main.py --help
    ```
+
+## CLI Arguments
+- `--xlim`: x range (default: -10 10)
+- `--tlim`: t range (default: 0 20)
+- `--nx`: number of x points (default: 800)
+- `--nt`: number of t points (default: 800)
+- `--alpha`: base alpha amplitude (default: 0.05)
+- `--field`: initial field type (`default`, `soliton`, `gaussian`, `random`)
+- `--save`: save figure to file (e.g. output.png)
+- `--evolve`: evolve field and produce animation
+- `--frames`: number of animation frames (used with --evolve)
+- `--dt`: time step for evolution (used with --evolve)
+- `--anim`: filename for animation output (e.g. output.mp4)
 
 ## Field Types
 - `default`: Mixed harmonics (original demo)
@@ -62,11 +75,14 @@ This simulation explores a quantum scalar field φ(x,t) augmented by an advanced
 - Extend to curved spacetime
 - Add time evolution or animation
 
+## Animation Output
+Animation output: If `--anim` is specified, an animation is saved as an `.mp4` file (not tracked by git by default).
+
 ## License
 This project is licensed under the MIT License. See [LICENSE](LICENSE).
 
 ## Repository
-This project is modular and ready for extension. See `main.py` for the main entry point and function definitions.
+This project is modular and ready for extension. See `main.py` for the main entry point and function definitions. See `simulation.py` for additional simulation logic and animation handling.
 
 ---
 
