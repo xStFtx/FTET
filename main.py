@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 import sympy as sp
 import argparse
+import simulation
+import matplotlib.animation as animation
 
 # === Field Definitions ===
 def get_phi_functions(field_type='default'):
@@ -14,7 +16,6 @@ def get_phi_functions(field_type='default'):
     elif field_type == 'gaussian':
         phi_expr = sp.exp(-((x_sym - 2)**2 + (t_sym - 5)**2)/5)
     elif field_type == 'random':
-        # Not symbolic, will handle in main
         phi_expr = None
     else:
         raise ValueError(f"Unknown field_type: {field_type}")
@@ -82,6 +83,25 @@ def plot_fields(x, t, X, T, S, L, phi, alpha, save_path=None):
         print(f"Saved figure to {save_path}")
     plt.show()
 
+# === Animation ===
+def animate_field(x, phi_t, interval=30, save_path=None):
+    fig, ax = plt.subplots(figsize=(10, 5))
+    im = ax.imshow(phi_t[0][None, :], aspect='auto', extent=[x.min(), x.max(), 0, 1], cmap='plasma', vmin=phi_t.min(), vmax=phi_t.max())
+    ax.set_title('Field φ(x) Evolution')
+    ax.set_xlabel('x')
+    ax.set_ylabel('time (frame)')
+    cb = fig.colorbar(im, ax=ax)
+    def update(frame):
+        im.set_data(phi_t[frame][None, :])
+        ax.set_ylabel(f'time step {frame}')
+        return [im]
+    ani = animation.FuncAnimation(fig, update, frames=len(phi_t), blit=True, interval=interval)
+    if save_path:
+        ani.save(save_path, writer='ffmpeg', dpi=150)
+        print(f"Animation saved to {save_path}")
+    else:
+        plt.show()
+
 # === Diagnostics ===
 def print_diagnostics(S, L):
     print("--- Diagnostics ---")
@@ -98,6 +118,11 @@ def main():
     parser.add_argument('--alpha', type=float, default=0.05, help='base alpha amplitude')
     parser.add_argument('--field', type=str, default='default', choices=['default', 'soliton', 'gaussian', 'random'], help='initial field type')
     parser.add_argument('--save', type=str, default=None, help='save figure to file')
+    parser.add_argument('--evolve', action='store_true', help='run time evolution (1D) and animate')
+    parser.add_argument('--frames', type=int, default=200, help='number of animation frames (for evolution)')
+    parser.add_argument('--dt', type=float, default=0.01, help='time step for evolution')
+    parser.add_argument('--noise', type=float, default=0.0, help='noise amplitude for evolution')
+    parser.add_argument('--anim', type=str, default=None, help='filename to save animation (e.g., anim.mp4)')
     args = parser.parse_args()
 
     x = np.linspace(args.xlim[0], args.xlim[1], args.nx)
@@ -108,7 +133,18 @@ def main():
     S = compute_entropy_sensor(dphi_dx, dphi_dt, d2phi_dx2, d2phi_dt2)
     L, alpha = compute_lagrangian(phi, dphi_dx, dphi_dt, S, X, T, args.alpha)
     print_diagnostics(S, L)
-    plot_fields(x, t, X, T, S, L, phi, alpha, save_path=args.save)
+    if args.evolve:
+        phi0 = phi[:, 0]
+        phi1 = phi[:, 1] if phi.shape[1] > 1 else phi0.copy()
+        dx = x[1] - x[0]
+        dt = args.dt
+        nt = args.frames
+        def V_prime(phi):
+            return phi**3 - phi  # d/dphi (1/4 phi^4 - 1/2 phi^2)
+        phi_t = simulation.leapfrog_time_evolution(phi0, phi1, dx, dt, nt, V_prime_func=V_prime, noise_amp=args.noise)
+        animate_field(x, phi_t, interval=30, save_path=args.anim)
+    else:
+        plot_fields(x, t, X, T, S, L, phi, alpha, save_path=args.save)
 
 if __name__ == "__main__":
     main()
