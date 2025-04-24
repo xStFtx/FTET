@@ -84,6 +84,45 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE).
 ## Repository
 This project is modular and ready for extension. See `main.py` for the main entry point and function definitions. See `simulation.py` for additional simulation logic and animation handling.
 
+## Example Usage
+
+See `EXAMPLES.md` for detailed command-line examples and sample outputs.
+
+### Basic Run
+```bash
+python main.py --field default --save myplot.png
+```
+
+### Soliton Animation
+```bash
+python main.py --field soliton --xlim -20 20 --nx 400 --evolve --frames 300 --dt 0.02 --anim soliton.mp4
+```
+
+### Help
+```bash
+python main.py --help
+```
+
+## Output Directory
+All images and animations are saved in the `output/` directory by default.
+
+## Troubleshooting / FAQ
+- **Animation not saving?**
+  - Ensure `ffmpeg` is installed and available in your PATH.
+- **Virtual environment issues?**
+  - Double-check activation and dependencies with `pip list`.
+- **Output files not appearing?**
+  - Check the `output/` directory and your CLI arguments.
+
+## Contributing
+See `CONTRIBUTING.md` for guidelines on bug reports, feature requests, and pull requests.
+
+## Tests
+Automated tests and testing instructions are available in the `tests/` directory.
+
+## Screenshots
+Add screenshots or output images to the `EXAMPLES.md` or here for quick reference.
+
 ---
 
 Feel free to contribute or suggest improvements!
